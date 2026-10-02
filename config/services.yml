@@ -1,0 +1,101 @@
+services:
+
+    biochaos.statcharts.forums:
+        class: biochaos\statcharts\service\forums
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '%tables.forums%'
+
+    biochaos.statcharts.colours:
+        class: biochaos\statcharts\service\colours
+        arguments:
+            - '@config'
+            - '@config_text'
+            - '@biochaos.statcharts.forums'
+            - '@biochaos.statcharts.grouping'
+
+    biochaos.statcharts.rebuild:
+        class: biochaos\statcharts\service\rebuild
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@config_text'
+            - '@dbal.tools'
+            - '%core.table_prefix%'
+            - '%tables.forums%'
+            - '%tables.posts%'
+            - '%tables.topics%'
+            - '%tables.users%'
+            - '@biochaos.statcharts.forums'
+            - '@biochaos.statcharts.colours'
+            - '@biochaos.statcharts.tables'
+
+    biochaos.statcharts.tables:
+        class: biochaos\statcharts\service\tables
+        arguments:
+            - '@config'
+            - '%core.table_prefix%'
+
+    biochaos.statcharts.grouping:
+        class: biochaos\statcharts\service\grouping
+
+    biochaos.statcharts.reader:
+        class: biochaos\statcharts\service\reader
+        arguments:
+            - '@dbal.conn'
+            - '@config'
+            - '@cache.driver'
+            - '@language'
+            - '@text_formatter.utils'
+            - '@biochaos.statcharts.grouping'
+            - '%core.table_prefix%'
+            - '%tables.posts%'
+            - '@biochaos.statcharts.colours'
+            - '@biochaos.statcharts.tables'
+
+    biochaos.statcharts.palettes:
+        class: biochaos\statcharts\service\palettes
+        arguments:
+            - '@config_text'
+
+    biochaos.statcharts.controller:
+        class: biochaos\statcharts\controller\main
+        arguments:
+            - '@auth'
+            - '@user'
+            - '@request'
+            - '@controller.helper'
+            - '@language'
+            - '@template'
+            - '@biochaos.statcharts.reader'
+            - '@biochaos.statcharts.palettes'
+
+    biochaos.statcharts.cron.rebuild:
+        class: biochaos\statcharts\cron\task\rebuild
+        arguments:
+            - '@config'
+            - '@biochaos.statcharts.rebuild'
+        tags:
+            - { name: cron.task }
+
+    biochaos.statcharts.console.rebuild:
+        class: biochaos\statcharts\console\command\rebuild
+        arguments:
+            - '@user'
+            - '@biochaos.statcharts.rebuild'
+        tags:
+            - { name: console.command }
+
+    biochaos.statcharts.listener:
+        class: biochaos\statcharts\event\listener
+        arguments:
+            - '@auth'
+            - '@config'
+            - '@cache.driver'
+            - '@dbal.conn'
+            - '@controller.helper'
+            - '@template'
+            - '@biochaos.statcharts.tables'
+        tags:
+            - { name: event.listener }

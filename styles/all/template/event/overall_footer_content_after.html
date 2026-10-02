@@ -1,0 +1,6 @@
+{# On every page; only forum and topic pages set a link. Sits right after the page's content: below the Information panel. #}
+{% if U_STATCHARTS_TOPIC or U_STATCHARTS_FORUM %}
+	<p class="statcharts-link">
+		<a href="{{ U_STATCHARTS_TOPIC ?: U_STATCHARTS_FORUM }}"><i class="icon fa-bar-chart fa-fw" aria-hidden="true"></i> <span>{{ U_STATCHARTS_TOPIC ? lang('STATCHARTS_LINK_TOPIC') : lang('STATCHARTS_LINK_FORUM') }}</span></a>
+	</p>
+{% endif %}

@@ -1,0 +1,4 @@
+.claude/
+*.zip
+build/
+__pycache__/

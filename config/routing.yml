@@ -1,0 +1,9 @@
+biochaos_statcharts_page:
+    path: /stats
+    defaults: { _controller: biochaos.statcharts.controller:page }
+
+biochaos_statcharts_data:
+    path: /stats/data/{what}
+    defaults: { _controller: biochaos.statcharts.controller:data }
+    requirements:
+        what: overview|top|user|topic|topics|users

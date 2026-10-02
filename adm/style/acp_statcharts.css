@@ -1,0 +1,190 @@
+/* Stat Charts extension for phpBB - ACP settings page. GPL-2.0-only. */
+
+#statcharts-acp .sc-small {
+	font-size: 0.9em;
+	color: #536482;
+}
+
+#statcharts-acp .sc-attention {
+	font-weight: bold;
+}
+
+#statcharts-acp .sc-build {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin: 10px 0;
+}
+
+#statcharts-acp .sc-progress {
+	width: 240px;
+	max-width: 100%;
+}
+
+#statcharts-acp .sc-modes .sc-mode {
+	display: block;
+	margin-bottom: 8px;
+	white-space: normal;
+}
+
+#statcharts-acp .sc-order-actions {
+	margin-top: 10px;
+}
+
+#statcharts-acp .sc-too-many {
+	margin-top: 8px;
+}
+
+#statcharts-acp .sc-table-wrap {
+	overflow-x: auto;
+}
+
+#statcharts-acp .sc-entities {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 6px 0;
+}
+
+#statcharts-acp .sc-entities th,
+#statcharts-acp .sc-entities td {
+	vertical-align: middle;
+	padding: 4px 6px;
+	border-bottom: 1px solid #e0e4e8;
+}
+
+/* The ACP paints every th as a blue caps bar; here the swatches are the header. */
+#statcharts-acp .sc-entities th {
+	background: none;
+	color: inherit;
+	text-transform: none;
+	font-size: inherit;
+	font-weight: bold;
+}
+
+#statcharts-acp .sc-entities .sc-palette-name {
+	text-align: start;
+	white-space: nowrap;
+}
+
+#statcharts-acp .sc-entities .sc-palette-name .sc-small {
+	font-weight: normal;
+}
+
+#statcharts-acp .sc-entities .sc-toggle-row th,
+#statcharts-acp .sc-entities .sc-toggle-row td {
+	border-bottom: 2px solid #b9c3cc;
+}
+
+#statcharts-acp .sc-entities .sc-col {
+	text-align: center;
+	width: 44px;
+}
+
+/* A position switched off: hatched down the whole column, in every palette. */
+#statcharts-acp .sc-entities .sc-off {
+	background: repeating-linear-gradient(135deg, transparent 0 4px, rgba(0, 0, 0, 0.07) 4px 8px);
+}
+
+#statcharts-acp .sc-entities .sc-off .sc-swatch {
+	opacity: 0.2;
+}
+
+#statcharts-acp .sc-move {
+	white-space: nowrap;
+	width: 1%;
+}
+
+#statcharts-acp .sc-move button {
+	min-width: 26px;
+	padding: 2px 4px;
+}
+
+#statcharts-acp .sc-badge {
+	display: inline-block;
+	margin-inline-start: 6px;
+	padding: 0 5px;
+	border-radius: 3px;
+	background: #fff3bf;
+	color: #5c4400;
+	font-size: 0.85em;
+}
+
+#statcharts-acp .sc-colours {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 10px;
+}
+
+#statcharts-acp .sc-swatch-choice,
+#statcharts-acp .sc-colour {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	white-space: nowrap;
+}
+
+#statcharts-acp .sc-swatch {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	border-radius: 3px;
+	border: 1px solid rgba(0, 0, 0, 0.25);
+	/* Some ACP themes fade every span in a settings row; a swatch is the colour itself. */
+	opacity: 1;
+}
+
+#statcharts-acp .sc-check {
+	margin: 8px 0;
+}
+
+#statcharts-acp .sc-problems {
+	margin: 4px 0;
+	padding-inline-start: 20px;
+	list-style: disc;
+}
+
+#statcharts-acp .sc-problems .sc-bad {
+	color: #bc2a4d;
+}
+
+#statcharts-acp .sc-problems .sc-warn {
+	color: #8a5a00;
+}
+
+#statcharts-acp .sc-ok {
+	color: #22782d;
+}
+
+#statcharts-acp .sc-inline-form {
+	display: inline-block;
+	margin: 0 6px 6px 0;
+}
+
+#statcharts-acp .sc-palette {
+	border-top: 1px solid #ccc;
+	padding: 10px 0;
+}
+
+#statcharts-acp .sc-palette-editor .sc-colours {
+	margin: 6px 0;
+}
+
+#statcharts-acp .sc-palette-editor input[type="color"] {
+	width: 34px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid #999;
+}
+
+#statcharts-acp .sc-preview {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px;
+	padding: 8px;
+	border: 1px solid;
+	border-radius: 4px;
+	font-weight: bold;
+}

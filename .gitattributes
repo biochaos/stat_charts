@@ -1,0 +1,6 @@
+# Enforce LF line endings for all files
+* text=auto eol=lf
+
+# Keep repository housekeeping out of source archives
+.gitattributes      export-ignore
+.gitignore          export-ignore

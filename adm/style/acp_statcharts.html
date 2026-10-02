@@ -1,0 +1,155 @@
+{% INCLUDECSS '@biochaos_statcharts/acp_statcharts.css' %}
+{% include 'overall_header.html' %}
+
+<h1>{{ lang('ACP_STATCHARTS_SETTINGS') }}</h1>
+<p>{{ lang('ACP_STATCHARTS_EXPLAIN') }}</p>
+
+{% if not S_CONFIGURED %}
+	<div class="errorbox notice"><p>{{ lang('ACP_STATCHARTS_NOT_CONFIGURED') }}</p></div>
+{% endif %}
+
+<div id="statcharts-acp" data-rebuild-url="{{ U_REBUILD }}">
+
+	<fieldset>
+		<legend>{{ lang('ACP_STATCHARTS_STATUS') }}</legend>
+		{% if not S_BUILT %}
+			<p class="sc-attention">{{ lang('ACP_STATCHARTS_NOT_BUILT') }}</p>
+		{% else %}
+			<dl>
+				<dt><label>{{ lang('ACP_STATCHARTS_LAST_BUILD') }}</label></dt>
+				<dd>{{ LAST_BUILD }}</dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('ACP_STATCHARTS_NEXT_BUILD') }}</label><br><span>{{ lang('ACP_STATCHARTS_NEXT_BUILD_EXPLAIN') }}</span></dt>
+				<dd>{{ NEXT_BUILD }}</dd>
+			</dl>
+			{% if S_OVERDUE %}<div class="errorbox"><p>{{ lang('ACP_STATCHARTS_OVERDUE') }}</p></div>{% endif %}
+			{% if DIRTY %}<div class="errorbox"><p>{{ lang('ACP_STATCHARTS_DIRTY') }} {{ DIRTY }}</p></div>{% endif %}
+		{% endif %}
+		{% if S_BUILDING %}<p>{{ lang('ACP_STATCHARTS_BUILDING') }}</p>{% endif %}
+
+		<div class="sc-build">
+			<button type="button" class="button1 sc-build-button">{% if S_BUILT %}{{ lang('ACP_STATCHARTS_REBUILD_NOW') }}{% else %}{{ lang('ACP_STATCHARTS_BUILD_NOW') }}{% endif %}</button>
+			<progress class="sc-progress" max="100" value="{{ BUILDING_PROGRESS }}"{% if not S_BUILDING %} hidden{% endif %}></progress>
+			<span class="sc-build-status" role="status"></span>
+		</div>
+		<p class="sc-small">{{ lang('ACP_STATCHARTS_PURGE_WARNING') }}</p>
+	</fieldset>
+
+	<form method="post" action="{{ U_ACTION }}">
+		<fieldset>
+			<legend>{{ lang('ACP_STATCHARTS_DISPLAY') }}</legend>
+			<dl>
+				<dt><label>{{ lang('ACP_STATCHARTS_GROUPING') }}</label></dt>
+				<dd class="sc-modes">
+					{% for mode in modes %}
+						<label class="sc-mode">
+							<input type="radio" name="grouping" value="{{ mode.VALUE }}"{% if mode.SELECTED %} checked{% endif %}>
+							<strong>{{ mode.LABEL }}</strong> <span class="sc-count" data-mode="{{ mode.VALUE }}"></span><br>
+							<span class="sc-small">{{ mode.EXPLAIN }}</span>
+						</label>
+					{% endfor %}
+					<div class="sc-too-many errorbox" hidden><p></p></div>
+				</dd>
+			</dl>
+			<dl>
+				<dt><label for="start_date">{{ lang('ACP_STATCHARTS_START_DATE') }}</label><br><span>{{ lang('ACP_STATCHARTS_START_DATE_EXPLAIN') }}</span></dt>
+				<dd><input type="date" id="start_date" name="start_date" value="{{ START_DATE }}"></dd>
+			</dl>
+			<p class="submit-buttons">
+				<input type="hidden" name="action" value="display">
+				<input class="button1" type="submit" value="{{ lang('SUBMIT') }}">
+			</p>
+			{{ S_FORM_TOKEN }}
+		</fieldset>
+	</form>
+
+	<form method="post" action="{{ U_ACTION }}" class="sc-palettes-form">
+		<fieldset>
+			<legend>{{ lang('ACP_STATCHARTS_PALETTES') }}</legend>
+			<p>{{ lang('ACP_STATCHARTS_PALETTES_EXPLAIN') }}</p>
+			<div class="sc-assignments"></div>
+			<p class="submit-buttons">
+				<input type="hidden" name="action" value="palettes">
+				<input class="button1" type="submit" value="{{ lang('SUBMIT') }}">
+			</p>
+			{{ S_FORM_TOKEN }}
+		</fieldset>
+	</form>
+
+	<fieldset>
+		<legend>{{ lang('ACP_STATCHARTS_CUSTOM') }}</legend>
+		<p>{{ lang('ACP_STATCHARTS_CUSTOM_EXPLAIN') }}</p>
+		<div class="sc-palette-list"></div>
+		<form method="post" action="{{ U_ACTION }}">
+			<label for="copy_from">{{ lang('ACP_STATCHARTS_CREATE_FROM') }}</label>
+			<select id="copy_from" name="copy_from" class="sc-palette-select"></select>
+			<input type="hidden" name="action" value="custom_create">
+			<input class="button2" type="submit" value="{{ lang('ACP_STATCHARTS_CREATE') }}">
+			{{ S_FORM_TOKEN }}
+		</form>
+	</fieldset>
+
+	<form method="post" action="{{ U_ACTION }}">
+		<fieldset>
+			<legend>{{ lang('ACP_STATCHARTS_DATA') }}</legend>
+			<p>{{ lang('ACP_STATCHARTS_DATA_EXPLAIN') }}</p>
+			<dl>
+				<dt><label for="excluded">{{ lang('ACP_STATCHARTS_EXCLUDED') }}</label><br><span>{{ lang('ACP_STATCHARTS_EXCLUDED_EXPLAIN') }}</span></dt>
+				<dd><select id="excluded" name="excluded[]" multiple size="10">{{ EXCLUDED_OPTIONS }}</select></dd>
+			</dl>
+			<dl>
+				<dt><label>{{ lang('ACP_STATCHARTS_COUNT_ANONYMOUS') }}</label><br><span>{{ lang('ACP_STATCHARTS_COUNT_ANONYMOUS_EXPLAIN') }}</span></dt>
+				<dd>
+					<label><input type="radio" class="radio" name="count_anonymous" value="1"{% if S_COUNT_ANONYMOUS %} checked{% endif %}> {{ lang('YES') }}</label>
+					<label><input type="radio" class="radio" name="count_anonymous" value="0"{% if not S_COUNT_ANONYMOUS %} checked{% endif %}> {{ lang('NO') }}</label>
+				</dd>
+			</dl>
+			<p class="submit-buttons">
+				<input type="hidden" name="action" value="data">
+				<input class="button1" type="submit" value="{{ lang('SUBMIT') }}">
+			</p>
+			{{ S_FORM_TOKEN }}
+		</fieldset>
+	</form>
+
+	<form method="post" action="{{ U_ACTION }}" class="sc-colours-form">
+		<fieldset>
+			<legend>{{ lang('ACP_STATCHARTS_COLOURS') }}</legend>
+			<p>{{ lang('ACP_STATCHARTS_COLOURS_EXPLAIN') }}</p>
+			{% if S_ORDER_CUSTOM %}<p class="sc-small">{{ lang('ACP_STATCHARTS_ORDER_CUSTOM') }}</p>{% endif %}
+			<div class="sc-table-wrap">
+				<table class="sc-entities">
+					<thead></thead>
+					<tbody></tbody>
+				</table>
+			</div>
+			<div class="sc-neighbours"></div>
+			<p class="submit-buttons">
+				<input type="hidden" name="action" value="colours">
+				<input type="hidden" name="order" value="">
+				<input class="button1" type="submit" value="{{ lang('SUBMIT') }}">
+			</p>
+			<p class="sc-order-actions">
+				<input class="button2" type="submit" form="sc-reassign" value="{{ lang('ACP_STATCHARTS_REASSIGN') }}">
+				{% if S_ORDER_CUSTOM %}<input class="button2" type="submit" form="sc-reset-order" value="{{ lang('ACP_STATCHARTS_RESET_ORDER') }}">{% endif %}
+				<br><span class="sc-small">{{ lang('ACP_STATCHARTS_REASSIGN_EXPLAIN') }}</span>
+			</p>
+			{{ S_FORM_TOKEN }}
+		</fieldset>
+	</form>
+	{# Forms cannot nest: the buttons above submit these through their form attribute. #}
+	<form method="post" action="{{ U_ACTION }}" id="sc-reassign" hidden>
+		<input type="hidden" name="action" value="reassign">
+		{{ S_FORM_TOKEN }}
+	</form>
+	<form method="post" action="{{ U_ACTION }}" id="sc-reset-order" hidden>
+		<input type="hidden" name="action" value="reset_order">
+		{{ S_FORM_TOKEN }}
+	</form>
+</div>
+
+<script type="application/json" id="statcharts-acp-config">{{ STATCHARTS_ACP_JSON }}</script>
+{% INCLUDEJS '@biochaos_statcharts/acp_statcharts.js' %}
+
+{% include 'overall_footer.html' %}

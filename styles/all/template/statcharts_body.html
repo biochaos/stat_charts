@@ -1,0 +1,19 @@
+{% INCLUDECSS '@biochaos_statcharts/statcharts.css' %}
+{% include 'overall_header.html' %}
+
+<h2 class="statcharts-title">{{ lang('STATCHARTS_TITLE') }}</h2>
+
+<div id="statcharts" class="statcharts" dir="{{ S_CONTENT_DIRECTION }}">
+	<noscript><p>{{ lang('STATCHARTS_NOSCRIPT') }}</p></noscript>
+</div>
+
+<script type="application/json" id="statcharts-config">{{ STATCHARTS_CONFIG }}</script>
+
+{# Chart.js is a shared library: load it once, whichever extension includes it first. #}
+{% if not definition.INCLUDED_CHARTJS %}
+	{% INCLUDEJS '@biochaos_statcharts/js/chart.umd.min.js' %}
+	{% DEFINE INCLUDED_CHARTJS = true %}
+{% endif %}
+{% INCLUDEJS '@biochaos_statcharts/js/statcharts.js' %}
+
+{% include 'overall_footer.html' %}
