@@ -1,4 +1,5 @@
 # Stat Charts
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/biochaos/stat_charts/total?color=red)
 
 Statistics for phpBB boards: posts, topics, thanks and members over time, by forum,
 member and topic, on a page of its own at `app.php/stats`.
