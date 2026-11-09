@@ -53,6 +53,7 @@ services:
             - '%tables.posts%'
             - '@biochaos.statcharts.colours'
             - '@biochaos.statcharts.tables'
+            - '%tables.topics%'
 
     biochaos.statcharts.palettes:
         class: biochaos\statcharts\service\palettes
@@ -83,6 +84,7 @@ services:
         class: biochaos\statcharts\console\command\rebuild
         arguments:
             - '@user'
+            - '@language'
             - '@biochaos.statcharts.rebuild'
         tags:
             - { name: console.command }

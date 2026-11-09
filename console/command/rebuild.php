@@ -22,10 +22,14 @@ class rebuild extends \phpbb\console\command\command
 	/** @var \biochaos\statcharts\service\rebuild */
 	private $rebuild;
 
-	public function __construct(\phpbb\user $user, \biochaos\statcharts\service\rebuild $rebuild)
+	/** @var \phpbb\language\language */
+	private $language;
+
+	public function __construct(\phpbb\user $user, \phpbb\language\language $language, \biochaos\statcharts\service\rebuild $rebuild)
 	{
 		$this->rebuild = $rebuild;
-		$user->add_lang_ext('biochaos/statcharts', 'cli');
+		$this->language = $language;
+		$language->add_lang('cli', 'biochaos/statcharts');
 		parent::__construct($user);
 	}
 
@@ -33,8 +37,8 @@ class rebuild extends \phpbb\console\command\command
 	{
 		$this
 			->setName('statcharts:rebuild')
-			->setDescription($this->user->lang('STATCHARTS_CLI_REBUILD'))
-			->addOption('restart', null, InputOption::VALUE_NONE, $this->user->lang('STATCHARTS_CLI_REBUILD_RESTART'))
+			->setDescription($this->language->lang('STATCHARTS_CLI_REBUILD'))
+			->addOption('restart', null, InputOption::VALUE_NONE, $this->language->lang('STATCHARTS_CLI_REBUILD_RESTART'))
 		;
 	}
 
@@ -47,7 +51,7 @@ class rebuild extends \phpbb\console\command\command
 		$progress = function ($step, $name, $done, $total, $unit) use ($output, &$last_step) {
 			if ($output->isVerbose() || $step !== $last_step)
 			{
-				$output->writeln($this->user->lang($unit === 'day' ? 'STATCHARTS_CLI_PROGRESS_DAYS' : 'STATCHARTS_CLI_PROGRESS',
+				$output->writeln($this->language->lang($unit === 'day' ? 'STATCHARTS_CLI_PROGRESS_DAYS' : 'STATCHARTS_CLI_PROGRESS',
 					$step, $name, $done, $total));
 				$last_step = $step;
 			}
@@ -57,11 +61,11 @@ class rebuild extends \phpbb\console\command\command
 
 		if ($result === \biochaos\statcharts\service\rebuild::RESULT_LOCKED)
 		{
-			$io->error($this->user->lang('STATCHARTS_CLI_LOCKED'));
+			$io->error($this->language->lang('STATCHARTS_CLI_LOCKED'));
 			return 1;
 		}
 
-		$io->success($this->user->lang('STATCHARTS_CLI_DONE', round(microtime(true) - $start, 1)));
+		$io->success($this->language->lang('STATCHARTS_CLI_DONE', round(microtime(true) - $start, 1)));
 		return 0;
 	}
 }

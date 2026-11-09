@@ -29,6 +29,12 @@ use phpbb\textformatter\s9e\utils;
  * are returned as plain text, entities decoded; the page escapes them.
  * Results are cached until the next rebuild: every cache key carries the
  * build time, the presentation settings and the viewer's forum visibility.
+ *
+ * What names a topic or shows a post is checked live on every request, after
+ * the cache: a topic soft-deleted, unapproved or moved into a forum the viewer
+ * cannot read since the build drops out of every list, its tab answers "not
+ * found", and post previews are read fresh (never cached). Only the counts
+ * wait for the next rebuild.
  */
 class reader
 {
@@ -39,6 +45,9 @@ class reader
 	const MAX_LIMIT     = 50;
 	const PREVIEW_SHORT = 200;
 	const PREVIEW_LONG  = 500;
+
+	/** Extra rows a cached top-N list keeps, to refill it after the live check. */
+	const SPARE         = 10;
 
 	/** Widgets of top(), with the scopes each accepts. */
 	const WIDGETS = [
@@ -76,6 +85,9 @@ class reader
 	/** @var string */
 	private $posts_table;
 
+	/** @var string */
+	private $topics_table;
+
 	/** @var array|null|false Memoised meta; false until read */
 	private $meta = false;
 
@@ -101,9 +113,11 @@ class reader
 		$table_prefix,
 		$posts_table,
 		colours $colours,
-		tables $tables
+		tables $tables,
+		$topics_table
 	)
 	{
+		$this->topics_table = $topics_table;
 		$this->colours      = $colours;
 		$this->tables       = $tables;
 		$this->db           = $db;
@@ -272,8 +286,14 @@ class reader
 			return null;
 		}
 
-		$key = implode('|', ['top', $widget, $scope, (int) $id, $from, $to, $limit]);
-		return $this->cached($key, function () use ($widget, $scope, $id, $from, $to, $limit) {
+		// Lists that name topics keep spare rows, so a topic hidden since the
+		// build can be dropped below and the list still filled.
+		$names_topics = in_array($widget, ['viewed', 'active', 'liked'], true);
+		$fetch = $names_topics ? $limit + self::SPARE : $limit;
+
+		$key = implode('|', ['top', $widget, $scope, (int) $id, $from, $to, $fetch]);
+		$rows = $this->cached($key, function () use ($widget, $scope, $id, $from, $to, $fetch) {
+			$limit = $fetch;
 			$where = [];
 			if ($scope === 'forum')
 			{
@@ -311,8 +331,7 @@ class reader
 				case 'active':
 					return $this->top_active($where, $scope, $from, $to, $limit);
 				case 'liked':
-					$length = ($scope === 'all') ? self::PREVIEW_LONG : self::PREVIEW_SHORT;
-					return $this->top_liked($where, $from, $to, $limit, $length);
+					return $this->top_liked($where, $from, $to, $limit);
 				case 'posters':
 					return $scope === 'topic'
 						? $this->top_posters((int) $id, $from, $to, $limit)
@@ -321,6 +340,19 @@ class reader
 					return $this->top_members($this->entity_forums((int) $id), 'likes', $from, $to, $limit);
 			}
 		});
+
+		if (!$names_topics)
+		{
+			return $rows;
+		}
+		$live = $this->live_topics(array_column($rows, 'topic_id'));
+		$rows = array_slice(array_values(array_filter($rows, function ($row) use ($live) {
+			return isset($live[$row['topic_id']]);
+		})), 0, $limit);
+
+		return $widget === 'liked'
+			? $this->with_previews($rows, ($scope === 'all') ? self::PREVIEW_LONG : self::PREVIEW_SHORT)
+			: $rows;
 	}
 
 	/**
@@ -341,7 +373,8 @@ class reader
 					'FROM' => [$this->table('totals_user') => 't'],
 					'ON'   => 't.user_id = u.user_id',
 				]],
-				'WHERE'     => 'u.user_id = ' . (int) $user_id,
+				'WHERE'     => $this->members_sql('u.user_type') . '
+					AND u.user_id = ' . (int) $user_id,
 			]));
 			$row = $this->db->sql_fetchrow($result);
 			$this->db->sql_freeresult($result);
@@ -389,8 +422,10 @@ class reader
 		$topic_id = (int) $topic_id;
 		if (!$topic_id)
 		{
-			$result = $this->db->sql_query('SELECT MAX(topic_id) AS id FROM ' . $this->table('dim_topic') . '
-				WHERE ' . $this->readable_sql('forum_id'));
+			$where = $this->live_topic_conditions();
+			$where[] = 'topic_id IN (SELECT topic_id FROM ' . $this->table('dim_topic') . ')';
+			$result = $this->db->sql_query('SELECT MAX(topic_id) AS id FROM ' . $this->topics_table . '
+				WHERE ' . implode(' AND ', $where));
 			$topic_id = (int) $this->db->sql_fetchfield('id');
 			$this->db->sql_freeresult($result);
 		}
@@ -451,7 +486,7 @@ class reader
 	 */
 	public function topics()
 	{
-		return $this->cached('topics', function () {
+		$all = $this->cached('topics', function () {
 			$out = ['id' => [], 'title' => [], 'forum_id' => [], 'replies' => []];
 			$result = $this->db->sql_query('SELECT topic_id, topic_title, forum_id, replies FROM ' . $this->table('dim_topic') . '
 				WHERE ' . $this->readable_sql('forum_id') . '
@@ -466,18 +501,32 @@ class reader
 			$this->db->sql_freeresult($result);
 			return $out;
 		});
+
+		$live = $this->live_topics();
+		$out = ['id' => [], 'title' => [], 'forum_id' => [], 'replies' => []];
+		foreach ($all['id'] as $i => $topic_id)
+		{
+			if (isset($live[$topic_id]))
+			{
+				foreach (array_keys($out) as $column)
+				{
+					$out[$column][] = $all[$column][$i];
+				}
+			}
+		}
+		return $out;
 	}
 
 	/**
-	 * The user search list (U0), columnar, by name. Bots and the anonymous
-	 * account are not people to look up.
+	 * The user search list (U0), columnar, by name. Only active members, as in
+	 * phpBB's member list: not bots, the anonymous account or inactive accounts.
 	 */
 	public function users()
 	{
 		return $this->cached('users', function () {
 			$out = ['id' => [], 'name' => []];
 			$result = $this->db->sql_query('SELECT user_id, username FROM ' . $this->table('dim_user') . '
-				WHERE user_type <> ' . USER_IGNORE . '
+				WHERE ' . $this->members_sql('user_type') . '
 				ORDER BY username_clean');
 			while ($row = $this->db->sql_fetchrow($result))
 			{
@@ -524,7 +573,7 @@ class reader
 	}
 
 	/** Likes received in the range, counted on the day they were given. */
-	private function top_liked(array $where, $from, $to, $limit, $preview_length)
+	private function top_liked(array $where, $from, $to, $limit)
 	{
 		$where[] = 'day BETWEEN ' . (int) $from . ' AND ' . (int) $to;
 		$result = $this->db->sql_query_limit('SELECT post_id, topic_id, poster_id, SUM(likes) AS n
@@ -545,22 +594,31 @@ class reader
 		$this->db->sql_freeresult($result);
 
 		$rows = $this->with_topics($rows, null);
-		$posts = $this->posts_for_preview(array_column($rows, 'post_id'));
 		$names = $this->user_names(array_column($rows, 'poster_id'));
+		foreach ($rows as &$row)
+		{
+			$row['poster'] = isset($names[$row['poster_id']]) ? $names[$row['poster_id']] : null;
+		}
+		unset($row);
+		return $rows;
+	}
 
+	/**
+	 * The posts' previews, read live and never cached: a post hidden or moved
+	 * since the build shows no text (posts_for_preview()).
+	 */
+	private function with_previews(array $rows, $length)
+	{
+		$posts = $this->posts_for_preview(array_column($rows, 'post_id'));
 		foreach ($rows as &$row)
 		{
 			$post = isset($posts[$row['post_id']]) ? $posts[$row['post_id']] : null;
-			$row['preview'] = $post ? $this->preview($post['post_text'], $preview_length) : null;
+			$row['preview'] = $post ? $this->preview($post['post_text'], $length) : null;
 
 			// A deleted member's kept posts belong to ANONYMOUS; the name is on the post.
-			if ($row['poster_id'] == ANONYMOUS && $post)
+			if ($row['poster_id'] == ANONYMOUS)
 			{
-				$row['poster'] = $this->plain($post['post_username']);
-			}
-			else
-			{
-				$row['poster'] = isset($names[$row['poster_id']]) ? $names[$row['poster_id']] : null;
+				$row['poster'] = $post ? $this->plain($post['post_username']) : null;
 			}
 		}
 		unset($row);
@@ -872,18 +930,7 @@ class reader
 			return $this->groups;
 		}
 
-		// The build's forum snapshot, cached per build. Not phpBB's SQL cache: its
-		// key is the query, and the query names the same table again two builds on.
-		$meta = $this->meta();
-		$key = '_statcharts_dim_forum_' . ($meta ? $meta['built_at'] : 0);
-		$forums = $this->cache->get($key);
-		if ($forums === false)
-		{
-			$result = $this->db->sql_query('SELECT forum_id, parent_id, forum_type, left_id, forum_name FROM ' . $this->table('dim_forum'));
-			$forums = $this->db->sql_fetchrowset($result);
-			$this->db->sql_freeresult($result);
-			$this->cache->put($key, $forums, self::CACHE_TTL);
-		}
+		$forums = $this->forum_snapshot();
 		$all = $this->grouping->resolve($forums, $this->grouping_mode(), $this->colours->order());
 
 		$postable = [];
@@ -933,6 +980,26 @@ class reader
 	}
 
 	/**
+	 * The build's forum snapshot (the forums the stats cover), cached per build.
+	 * Not phpBB's SQL cache: its key is the query, and the query names the same
+	 * table again two builds on.
+	 */
+	private function forum_snapshot()
+	{
+		$meta = $this->meta();
+		$key = '_statcharts_dim_forum_' . ($meta ? $meta['built_at'] : 0);
+		$forums = $this->cache->get($key);
+		if ($forums === false)
+		{
+			$result = $this->db->sql_query('SELECT forum_id, parent_id, forum_type, left_id, forum_name FROM ' . $this->table('dim_forum'));
+			$forums = $this->db->sql_fetchrowset($result);
+			$this->db->sql_freeresult($result);
+			$this->cache->put($key, $forums, self::CACHE_TTL);
+		}
+		return $forums;
+	}
+
+	/**
 	 * @return int[]|null Forum ids of an entity the viewer can read, or null if
 	 *                    the entity does not exist for them (including hidden, 0)
 	 */
@@ -961,12 +1028,59 @@ class reader
 		return 'topic_id IN (SELECT topic_id FROM ' . $this->table('dim_topic') . ' WHERE ' . $this->readable_sql('forum_id') . ')';
 	}
 
+	/** The topic is in the stats and, right now, approved in a forum the viewer can read. */
 	private function topic_readable($topic_id)
 	{
-		$result = $this->db->sql_query('SELECT forum_id FROM ' . $this->table('dim_topic') . ' WHERE topic_id = ' . (int) $topic_id);
-		$forum_id = $this->db->sql_fetchfield('forum_id');
+		$result = $this->db->sql_query('SELECT 1 AS found FROM ' . $this->table('dim_topic') . ' WHERE topic_id = ' . (int) $topic_id);
+		$in_stats = (bool) $this->db->sql_fetchfield('found');
 		$this->db->sql_freeresult($result);
-		return $forum_id !== false && isset($this->readable[(int) $forum_id]);
+		return $in_stats && isset($this->live_topics([(int) $topic_id])[(int) $topic_id]);
+	}
+
+	/**
+	 * Topics as they are now, not as built: approved, not the shadow of a moved
+	 * topic, in a forum the stats cover and the viewer can read.
+	 *
+	 * @param int[]|null $topic_ids Null for every such topic
+	 * @return array [topic_id => true]
+	 */
+	private function live_topics(?array $topic_ids = null)
+	{
+		if ($topic_ids !== null && !$topic_ids)
+		{
+			return [];
+		}
+		$where = $this->live_topic_conditions();
+		if ($topic_ids !== null)
+		{
+			$where[] = $this->db->sql_in_set('topic_id', array_values(array_unique(array_map('intval', $topic_ids))));
+		}
+		$result = $this->db->sql_query('SELECT topic_id FROM ' . $this->topics_table . '
+			WHERE ' . implode(' AND ', $where));
+		$live = [];
+		while ($row = $this->db->sql_fetchrow($result))
+		{
+			$live[(int) $row['topic_id']] = true;
+		}
+		$this->db->sql_freeresult($result);
+		return $live;
+	}
+
+	/** @return string[] Conditions on phpbb_topics for live_topics() */
+	private function live_topic_conditions()
+	{
+		$covered = array_map('intval', array_column($this->forum_snapshot(), 'forum_id'));
+		return [
+			$this->db->sql_in_set('forum_id', array_values(array_intersect(array_keys($this->readable), $covered)), false, true),
+			'topic_visibility = ' . ITEM_APPROVED,
+			'topic_moved_id = 0',
+		];
+	}
+
+	/** Members to look up: not bots, the anonymous account or inactive accounts. */
+	private function members_sql($column)
+	{
+		return $this->db->sql_in_set($column, [USER_NORMAL, USER_FOUNDER]);
 	}
 
 	private function grouping_mode()

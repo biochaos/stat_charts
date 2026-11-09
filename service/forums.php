@@ -65,7 +65,7 @@ class forums
 	 * @param array|null $forums Rows from all(), to save reading them twice
 	 * @return array [allowed ids, excluded ids], each sorted ascending
 	 */
-	public function sets(array $forums = null)
+	public function sets(?array $forums = null)
 	{
 		$forums = $forums === null ? $this->all() : $forums;
 

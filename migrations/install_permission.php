@@ -10,9 +10,9 @@ namespace biochaos\statcharts\migrations;
 
 /**
  * u_statcharts_view, granted to registered users so the page works as soon as
- * the extension is enabled (SPEC section 10). Labelled in the ACP by
- * language/<lang>/permissions_statcharts.php, which phpBB loads by name, so no
- * core.permissions listener is needed.
+ * the extension is enabled (SPEC section 10). The ACP learns of it through
+ * the core.permissions listener (event/listener.php), and labels it from
+ * language/<lang>/permissions_statcharts.php.
  */
 class install_permission extends \phpbb\db\migration\migration
 {

@@ -21,7 +21,6 @@ if (empty($lang) || !is_array($lang))
 $lang = array_merge($lang, [
 	'STATCHARTS_TITLE'                   => 'İstatistikler',
 	'STATCHARTS_LOGIN'                   => 'İstatistikleri görmek için giriş yapmalısınız.',
-	'STATCHARTS_NOT_BUILT'               => 'İstatistikler henüz hesaplanmadı.',
 	'STATCHARTS_LINK_ELIDED'             => '[bağlantı]',
 	'STATCHARTS_NOSCRIPT'                => 'İstatistikler için JavaScript gereklidir.',
 	'STATCHARTS_JS_TAB_GENERAL'          => 'Genel',

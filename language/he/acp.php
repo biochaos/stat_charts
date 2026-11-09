@@ -73,7 +73,6 @@ $lang = array_merge($lang, [
 	'ACP_STATCHARTS_PALETTES'        => '2. ערכות צבעים',
 	'ACP_STATCHARTS_PALETTES_EXPLAIN' => 'גרף צובע את הרקע שלו לפי ערכת הצבעים, כך שכל ערכה עובדת עם כל סגנון. phpBB לא יודע אילו סגנונות כהים, ולכן יש לבחור ערכה לכל סגנון.',
 	'ACP_STATCHARTS_PALETTE_DEFAULT' => 'ערכת ברירת המחדל',
-	'ACP_STATCHARTS_PALETTE_STYLE'   => 'סגנון „%s”',
 	'ACP_STATCHARTS_PALETTE_INACTIVE' => '(לא פעיל)',
 	'ACP_STATCHARTS_CUSTOM'          => 'ערכות מותאמות',
 	'ACP_STATCHARTS_CUSTOM_EXPLAIN'  => 'מתחילים מעותק של ערכה קיימת. ערכה היא שמונה צבעים בסדר קבוע, האפור של „אחר”, וצבעי הרקע, הטקסט והרשת שהיא נבדקת מולם. בעיות מדווחות אבל אף פעם לא מונעות שמירה.',

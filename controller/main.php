@@ -111,7 +111,8 @@ class main
 			'urls'         => $urls,
 			// With the session id when the board needs it in URLs (no cookies).
 			'viewtopic'    => append_sid(generate_board_url() . '/viewtopic.php', false, false),
-			'locale'       => $this->user->lang_name,
+			// The pack's language tag (en-gb, pt-br), not its folder name (pt_br).
+			'locale'       => $this->language->lang('USER_LANG'),
 			'dir'          => $this->language->lang('DIRECTION'),
 			'guest'        => $this->user->data['user_id'] == ANONYMOUS,
 			'can_profiles' => (bool) $this->auth->acl_get('u_viewprofile'),
@@ -148,7 +149,8 @@ class main
 
 		$this->reader->set_viewer(
 			array_keys($this->auth->acl_getf('f_list', true)),
-			array_keys($this->auth->acl_getf('f_read', true))
+			// A password-protected forum is unreadable until its password is entered, as in core search and feeds.
+			array_diff(array_keys($this->auth->acl_getf('f_read', true)), $this->user->get_passworded_forums())
 		);
 
 		// Member stats follow phpBB's profile permission, as the member list does.

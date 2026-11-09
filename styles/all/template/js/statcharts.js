@@ -28,11 +28,19 @@
 	const DAY = 86400000;
 	const TABS = ['general', 'forum', 'topic', 'user'].filter((tab) => tab !== 'user' || cfg.can_profiles);
 
-	const nf = new Intl.NumberFormat(cfg.locale);
-	const nf1 = new Intl.NumberFormat(cfg.locale, {maximumFractionDigits: 1});
-	const pf = new Intl.NumberFormat(cfg.locale, {style: 'percent', maximumFractionDigits: 1});
-	const dateFmt = new Intl.DateTimeFormat(cfg.locale, {timeZone: 'UTC', day: 'numeric', month: 'numeric', year: 'numeric'});
-	const monthFmt = new Intl.DateTimeFormat(cfg.locale, {timeZone: 'UTC', month: 'short', year: 'numeric'});
+	// A language pack's tag can be invalid for Intl; fall back to the browser's locale.
+	const locale = (() => {
+		try {
+			return Intl.getCanonicalLocales(cfg.locale)[0];
+		} catch (e) {
+			return undefined;
+		}
+	})();
+	const nf = new Intl.NumberFormat(locale);
+	const nf1 = new Intl.NumberFormat(locale, {maximumFractionDigits: 1});
+	const pf = new Intl.NumberFormat(locale, {style: 'percent', maximumFractionDigits: 1});
+	const dateFmt = new Intl.DateTimeFormat(locale, {timeZone: 'UTC', day: 'numeric', month: 'numeric', year: 'numeric'});
+	const monthFmt = new Intl.DateTimeFormat(locale, {timeZone: 'UTC', month: 'short', year: 'numeric'});
 
 	for (const token of ['surface', 'ink', 'ink2', 'axis', 'grid']) {
 		root.style.setProperty('--sc-' + token, P[token]);
@@ -1108,11 +1116,11 @@
 	/* ------------------------------------------------------------------ */
 
 	function asOfTime(meta) {
-		return new Intl.DateTimeFormat(cfg.locale, {timeZone: meta.timezone, hour: '2-digit', minute: '2-digit'}).format(meta.built_at * 1000);
+		return new Intl.DateTimeFormat(locale, {timeZone: meta.timezone, hour: '2-digit', minute: '2-digit'}).format(meta.built_at * 1000);
 	}
 
 	function asOfLine(meta) {
-		const when = new Intl.DateTimeFormat(cfg.locale, {timeZone: meta.timezone, dateStyle: 'medium', timeStyle: 'short'}).format(meta.built_at * 1000);
+		const when = new Intl.DateTimeFormat(locale, {timeZone: meta.timezone, dateStyle: 'medium', timeStyle: 'short'}).format(meta.built_at * 1000);
 		return t('AS_OF', {time: when});
 	}
 
@@ -1332,7 +1340,7 @@
 			// Reply count is lifetime by design (SPEC section 15, 6b).
 			return sortSelect.value === 'replies'
 				? list.sort((a, b) => b.replies - a.replies)
-				: list.sort((a, b) => a.name.localeCompare(b.name, cfg.locale));
+				: list.sort((a, b) => a.name.localeCompare(b.name, locale));
 		};
 		const search = searchBox(t('TOPIC_SEARCH'), loadTopics, (topicId) => go('topic', topicId), t('TOPIC_NOT_FOUND'));
 		const refilter = async () => {

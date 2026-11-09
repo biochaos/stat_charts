@@ -159,7 +159,8 @@ class main_module
 
 			case 'custom_save':
 				$id = $this->request->variable('palette_id', '');
-				$values = ['name' => $this->request->variable('name', '', true), 'slots' => $this->request->variable('slots', [''])];
+				// The request service HTML-encodes text; store it plain, as every output escapes it.
+				$values = ['name' => htmlspecialchars_decode($this->request->variable('name', '', true), ENT_COMPAT), 'slots' => $this->request->variable('slots', [''])];
 				foreach ($this->palettes::TOKENS as $token)
 				{
 					$values[$token] = $this->request->variable($token, '');
@@ -196,7 +197,7 @@ class main_module
 			trigger_error($this->language->lang('ACP_STATCHARTS_PALETTE_DELETED') . adm_back_link($this->u_action));
 		}
 
-		confirm_box(false, $this->language->lang('ACP_STATCHARTS_PALETTE_DELETE_CONFIRM', $all['custom:' . $id]['name']),
+		confirm_box(false, $this->language->lang('ACP_STATCHARTS_PALETTE_DELETE_CONFIRM', utf8_htmlspecialchars($all['custom:' . $id]['name'])),
 			build_hidden_fields(['action' => 'custom_delete', 'palette_id' => $id]));
 		redirect($this->u_action);
 	}

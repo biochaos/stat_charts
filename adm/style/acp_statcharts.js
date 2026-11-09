@@ -425,7 +425,7 @@
 
 			const users = (palettesInUse().used[ref] || []).join(', ');
 			const form = h('form', {method: 'post', action: colourForm.getAttribute('action'), class: 'sc-palette-editor'},
-				h('p', null, h('input', {type: 'text', name: 'name', value: palette.name, maxlength: 60, class: 'inputbox autowidth'}),
+				h('p', null, h('input', {type: 'text', name: 'name', value: palette.name, maxlength: 60, class: 'inputbox autowidth', 'aria-label': t('PALETTE_NAME')}),
 					h('span', {class: 'sc-small sc-palette-users', 'data-ref': ref, text: users ? ' ' + t('PALETTE_FOR', users) : ''})),
 				h('div', {class: 'sc-colours'}, slots), h('div', {class: 'sc-colours'}, tokens),
 				preview, checks,

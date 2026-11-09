@@ -138,9 +138,14 @@ class colours
 			$this->save('statcharts_entity_order', $order);
 		}
 
+		// Two passes, so only the forums that lost their slot move: first every
+		// valid slot is claimed (the earlier entity wins a shared one), then the
+		// rest take free slots. One pass would let a moving forum take a slot a
+		// later forum still holds, and move that one too.
 		$disabled = array_flip($this->disabled());
 		$used = [];
 		$given = [];
+		$homeless = [];
 		foreach ($this->entities() as $entity)
 		{
 			$id = $entity['id'];
@@ -154,6 +159,10 @@ class colours
 				$used[$slot] = true;
 				continue;
 			}
+			$homeless[] = $id;
+		}
+		foreach ($homeless as $id)
+		{
 			$free = $this->first_free($used, $disabled);
 			if ($free === null)
 			{

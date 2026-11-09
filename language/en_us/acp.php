@@ -73,7 +73,6 @@ $lang = array_merge($lang, [
 	'ACP_STATCHARTS_PALETTES'        => '2. Palettes',
 	'ACP_STATCHARTS_PALETTES_EXPLAIN' => 'A chart paints its own background from its palette, so a palette works on any style. phpBB cannot tell which styles are dark, so choose a palette for each one.',
 	'ACP_STATCHARTS_PALETTE_DEFAULT' => 'Default palette',
-	'ACP_STATCHARTS_PALETTE_STYLE'   => 'Style “%s”',
 	'ACP_STATCHARTS_PALETTE_INACTIVE' => '(inactive)',
 	'ACP_STATCHARTS_CUSTOM'          => 'Custom palettes',
 	'ACP_STATCHARTS_CUSTOM_EXPLAIN'  => 'Start from a copy of an existing palette. A palette is eight colours in a fixed order, the grey for “Other”, and the background, text and grid colours it is checked against. Problems are reported but never block saving.',

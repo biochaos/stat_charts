@@ -3,8 +3,8 @@
 	"type": "phpbb-extension",
 	"description": "Board statistics: posts, topics, thanks and members over time, by forum, member and topic.",
 	"homepage": "https://github.com/biochaos/stat_charts",
-	"version": "1.0.0",
-	"time": "2026-10-02",
+	"version": "1.0.1",
+	"time": "2026-11-09",
 	"license": "GPL-2.0-only",
 	"authors": [
 		{

@@ -152,7 +152,7 @@ class rebuild
 	 * @param bool          $restart  Discard a build in progress and start over
 	 * @return string One of the RESULT_* constants
 	 */
-	public function run($budget, callable $progress = null, $restart = false)
+	public function run($budget, ?callable $progress = null, $restart = false)
 	{
 		if (!$this->acquire_lock())
 		{

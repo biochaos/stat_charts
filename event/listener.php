@@ -65,12 +65,21 @@ class listener implements EventSubscriberInterface
 	public static function getSubscribedEvents()
 	{
 		return [
+			'core.permissions'                    => 'add_permissions',
 			'core.user_setup'                     => 'load_language',
 			'core.page_header'                    => 'link_page',
 			'core.viewforum_modify_page_title'    => 'link_forum',
 			'core.viewtopic_modify_page_title'    => 'link_topic',
 			'core.memberlist_view_profile'        => 'link_member',
 		];
+	}
+
+	/** Registers u_statcharts_view, so the ACP's permission masks show it. */
+	public function add_permissions($event)
+	{
+		$permissions = $event['permissions'];
+		$permissions['u_statcharts_view'] = ['lang' => 'ACL_U_STATCHARTS_VIEW', 'cat' => 'misc'];
+		$event['permissions'] = $permissions;
 	}
 
 	public function load_language($event)
